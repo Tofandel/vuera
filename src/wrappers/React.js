@@ -67,32 +67,45 @@ export default {
   },
   inject: {
     $context: {
-      name: '_reactContext',
+      from: '_reactContext',
       default: false,
     },
   },
   computed: {
     context () {
-      return this.$context ? this.$context() : null
+      return this.$context ? this.$context() : undefined
     },
   },
   methods: {
     mountReactComponent (component) {
-      const ContextProvider = createContextProvider(this.context)
       const Component = makeReactContainer(component)
       const children = this.$slots.default !== undefined ? { children: this.$slots.default } : {}
-      ReactDOM.render(
-        <ContextProvider>
+      if (this.context) {
+        const ContextProvider = createContextProvider(this.context)
+        ReactDOM.render(
+          <ContextProvider>
+            <Component
+              {...this.$props.passedProps}
+              {...this.$attrs}
+              {...this.$listeners}
+              {...children}
+              ref={ref => (this.reactComponentRef = ref)}
+            />
+          </ContextProvider>,
+          this.$refs.react
+        )
+      } else {
+        ReactDOM.render(
           <Component
             {...this.$props.passedProps}
             {...this.$attrs}
             {...this.$listeners}
             {...children}
             ref={ref => (this.reactComponentRef = ref)}
-          />
-        </ContextProvider>,
-        this.$refs.react
-      )
+          />,
+          this.$refs.react
+        )
+      }
     },
   },
   mounted () {

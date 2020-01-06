@@ -4,12 +4,16 @@ export default Vue.component('vue-registered-component', {
   props: ['message', 'reset'],
   render (createElement) {
     return createElement('div', [
-      createElement('span', this.message),
-      createElement('button', {
-        on: {
-          click: this.reset,
+      createElement('span', this.$slots.default),
+      createElement(
+        'button',
+        {
+          on: {
+            click: this.reset,
+          },
         },
-      }),
+        this.message
+      ),
     ])
   },
 })

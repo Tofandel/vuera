@@ -4,8 +4,11 @@ import { VueWrapper } from '../../src'
 import VueComponent from '../fixtures/VueComponent'
 import VueRegisteredComponent from '../fixtures/VueRegisteredComponent'
 import VueSingleFileComponent from '../fixtures/VueSingleFileComponent.vue'
+import { TestContext, ContextReader } from '../fixtures/ReactComponentWithContext'
 
-const mockReset = () => { return jest.fn() }
+const mockReset = () => {
+  return jest.fn()
+}
 const makeReactInstanceWithVueComponent = (passedComponent, events) => {
   class ReactApp extends React.Component {
     constructor (props) {
@@ -23,11 +26,7 @@ const makeReactInstanceWithVueComponent = (passedComponent, events) => {
     render () {
       return (
         <div>
-          <input
-            type='text'
-            value={this.state.message}
-            onChange={this.onChange}
-          />
+          <input type='text' value={this.state.message} onChange={this.onChange} />
           <VueWrapper
             ref={ref => (this.vueWrapperRef = ref)}
             component={passedComponent}
@@ -67,8 +66,8 @@ describe('VueInReact', () => {
           <div>
             <input type="text" value="Message for Vue">
             <div>
-              <span>Message for Vue</span>
-              <button></button>
+              <span></span>
+              <button>Message for Vue</button>
             </div>
           </div>
         </div>`
@@ -84,8 +83,8 @@ describe('VueInReact', () => {
           <div>
             <input type="text" value="Message for Vue">
             <div>
-              <span>Message for Vue</span>
-              <button></button>
+              <span></span>
+              <button>Message for Vue</button>
             </div>
           </div>
         </div>`
@@ -101,7 +100,7 @@ describe('VueInReact', () => {
           <div>
             <input type="text" value="Message for Vue">
             <div>
-              <span>Message for Vue</span> <button></button>
+              <span></span> <button>Message for Vue</button>
             </div>
           </div>
         </div>`
@@ -157,30 +156,21 @@ describe('VueInReact', () => {
       document.querySelectorAll('[data-reactroot]').forEach(el => {
         el.removeAttribute('data-reactroot')
       })
-      document.body.innerHTML = document.body.innerHTML.replace(
-        /<!--[\s\S]*?-->/g,
-        ''
-      )
+      document.body.innerHTML = document.body.innerHTML.replace(/<!--[\s\S]*?-->/g, '')
     }
 
     it('works with a string', () => {
       render('Hello')
-      expect(document.querySelector('#root div div').innerHTML).toBe(
-        '<div>Hello</div>'
-      )
+      expect(document.querySelector('#root div div').innerHTML).toBe('<div>Hello</div>')
     })
 
-    it('works with a React component', () => {
+    it('works with an html component', () => {
       render(<div>Hello</div>)
-      expect(document.querySelector('#root div div').innerHTML).toBe(
-        '<div><div>Hello</div></div>'
-      )
+      expect(document.querySelector('#root div div').innerHTML).toBe('<div><div>Hello</div></div>')
     })
 
     it('works with a React component', () => {
-      render(
-        <VueWrapper component={componentWithChildren}>wow so nested</VueWrapper>
-      )
+      render(<VueWrapper component={componentWithChildren}>wow so nested</VueWrapper>)
       expect(document.querySelector('#root div div').innerHTML).toBe(
         '<div><div><div><div>wow so nested</div></div></div></div>'
       )
@@ -202,6 +192,19 @@ describe('VueInReact', () => {
             </div></div></div>
           </div>`
         )
+      )
+    })
+
+    it('passes context when mixing react and vue', () => {
+      render(
+        <TestContext.Provider value='Mixing wrapper context'>
+          <VueWrapper component={componentWithChildren}>
+            <ContextReader />
+          </VueWrapper>
+        </TestContext.Provider>
+      )
+      expect(document.querySelector('#root div div').innerHTML).toBe(
+        '<div><div><div><div><span>Mixing wrapper context</span></div></div></div></div>'
       )
     })
   })

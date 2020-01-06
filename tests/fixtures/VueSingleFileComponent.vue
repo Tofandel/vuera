@@ -1,7 +1,7 @@
 <template>
   <div>
-    <span>{{ message }}</span>
-    <button @click="raiseEvent"></button>
+    <span><slot></slot></span>
+    <button @click="raiseEvent">{{ message }}</button>
   </div>
 </template>
 

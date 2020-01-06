@@ -259,6 +259,7 @@ var VueContainer = function (_React$Component) {
       reactThisBinding.vueInstance = new Vue({
         el: targetElement,
         data: props,
+        parent: (typeof context === 'undefined' ? 'undefined' : _typeof(context)) === 'object' && 'vuerea' in context ? context.vuerea.instance : null,
         provide: function provide() {
           return {
             // Provide a function for reactivity
@@ -271,7 +272,7 @@ var VueContainer = function (_React$Component) {
           return createElement(VUE_COMPONENT_NAME, {
             props: this.$data,
             on: on
-          }, [wrapReactChildren(createElement, this.children)]);
+          }, this.children === undefined ? undefined : [wrapReactChildren(createElement, this.children)]);
         },
 
         components: (_components = {}, defineProperty(_components, VUE_COMPONENT_NAME, component), defineProperty(_components, 'vuera-internal-react-wrapper', ReactWrapper), _components)
@@ -386,31 +387,39 @@ var ReactWrapper = {
 
   inject: {
     $context: {
-      name: '_reactContext',
+      from: '_reactContext',
       default: false
     }
   },
   computed: {
     context: function context() {
-      return this.$context ? this.$context() : null;
+      return this.$context ? this.$context() : undefined;
     }
   },
   methods: {
     mountReactComponent: function mountReactComponent(component) {
       var _this3 = this;
 
-      var ContextProvider = createContextProvider(this.context);
       var Component = makeReactContainer(component);
       var children = this.$slots.default !== undefined ? { children: this.$slots.default } : {};
-      ReactDOM.render(React.createElement(
-        ContextProvider,
-        null,
-        React.createElement(Component, _extends({}, this.$props.passedProps, this.$attrs, this.$listeners, children, {
-          ref: function ref(_ref) {
-            return _this3.reactComponentRef = _ref;
+      if (this.context) {
+        var ContextProvider = createContextProvider(this.context);
+        ReactDOM.render(React.createElement(
+          ContextProvider,
+          null,
+          React.createElement(Component, _extends({}, this.$props.passedProps, this.$attrs, this.$listeners, children, {
+            ref: function ref(_ref) {
+              return _this3.reactComponentRef = _ref;
+            }
+          }))
+        ), this.$refs.react);
+      } else {
+        ReactDOM.render(React.createElement(Component, _extends({}, this.$props.passedProps, this.$attrs, this.$listeners, children, {
+          ref: function ref(_ref2) {
+            return _this3.reactComponentRef = _ref2;
           }
-        }))
-      ), this.$refs.react);
+        })), this.$refs.react);
+      }
     }
   },
   mounted: function mounted() {

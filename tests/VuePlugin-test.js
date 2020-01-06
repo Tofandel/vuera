@@ -80,15 +80,15 @@ describe('VuePlugin', () => {
         normalizeHTMLString(
           `<div>
             <div>
-              <span>VUE</span>
-              <button></button>
+              <span></span>
+              <button>VUE</button>
             </div>
             <div>
-              <span>VUE REGISTERED</span>
-              <button></button>
+              <span></span>
+              <button>VUE REGISTERED</button>
             </div>
             <div>
-              <span>VUE SINGLE FILE</span> <button></button>
+              <span></span> <button>VUE SINGLE FILE</button>
             </div>
             <div>
               <div>

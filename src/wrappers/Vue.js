@@ -66,6 +66,7 @@ export default class VueContainer extends React.Component {
     reactThisBinding.vueInstance = new Vue({
       el: targetElement,
       data: props,
+      parent: typeof context === 'object' && 'vuerea' in context ? context.vuerea.instance : null,
       provide () {
         return {
           // Provide a function for reactivity
@@ -81,7 +82,9 @@ export default class VueContainer extends React.Component {
             props: this.$data,
             on,
           },
-          [wrapReactChildren(createElement, this.children)]
+          this.children === undefined
+            ? undefined
+            : [wrapReactChildren(createElement, this.children)]
         )
       },
       components: {
