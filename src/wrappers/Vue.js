@@ -60,11 +60,20 @@ export default class VueContainer extends React.Component {
    */
   createVueInstance (targetElement, reactThisBinding) {
     const { component, on, ...props } = reactThisBinding.props
+    const context = reactThisBinding.__reactInternalMemoizedUnmaskedChildContext
 
     // `this` refers to Vue instance in the constructor
     reactThisBinding.vueInstance = new Vue({
       el: targetElement,
       data: props,
+      provide () {
+        return {
+          // Provide a function for reactivity
+          _reactContext: () => {
+            return context
+          },
+        }
+      },
       render (createElement) {
         return createElement(
           VUE_COMPONENT_NAME,

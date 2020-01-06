@@ -35,12 +35,29 @@ const makeReactContainer = Component => {
       const wrappedChildren = this.wrapVueChildren(children)
 
       return (
-        <Component {...rest}>
-          {children && <VueWrapper component={wrappedChildren} />}
-        </Component>
+        <Component {...rest}>{children && <VueWrapper component={wrappedChildren} />}</Component>
       )
     }
   }
+}
+
+function createContextProvider (context) {
+  class ContextProvider extends React.Component {
+    getChildContext () {
+      return context
+    }
+
+    render () {
+      return this.props.children
+    }
+  }
+
+  ContextProvider.childContextTypes = {}
+  Object.keys(context).forEach(key => {
+    ContextProvider.childContextTypes[key] = React.PropTypes.any.isRequired
+  })
+
+  return ContextProvider
 }
 
 export default {
@@ -48,18 +65,32 @@ export default {
   render (createElement) {
     return createElement('div', { ref: 'react' })
   },
+  inject: {
+    $context: {
+      name: '_reactContext',
+      default: false,
+    },
+  },
+  computed: {
+    context () {
+      return this.$context ? this.$context() : null
+    },
+  },
   methods: {
     mountReactComponent (component) {
+      const ContextProvider = createContextProvider(this.context)
       const Component = makeReactContainer(component)
       const children = this.$slots.default !== undefined ? { children: this.$slots.default } : {}
       ReactDOM.render(
-        <Component
-          {...this.$props.passedProps}
-          {...this.$attrs}
-          {...this.$listeners}
-          {...children}
-          ref={ref => (this.reactComponentRef = ref)}
-        />,
+        <ContextProvider>
+          <Component
+            {...this.$props.passedProps}
+            {...this.$attrs}
+            {...this.$listeners}
+            {...children}
+            ref={ref => (this.reactComponentRef = ref)}
+          />
+        </ContextProvider>,
         this.$refs.react
       )
     },

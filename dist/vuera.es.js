@@ -247,11 +247,20 @@ var VueContainer = function (_React$Component) {
           on = _reactThisBinding$pro.on,
           props = objectWithoutProperties(_reactThisBinding$pro, ['component', 'on']);
 
-      // `this` refers to Vue instance in the constructor
+      var context = reactThisBinding.__reactInternalMemoizedUnmaskedChildContext;
 
+      // `this` refers to Vue instance in the constructor
       reactThisBinding.vueInstance = new Vue({
         el: targetElement,
         data: props,
+        provide: function provide() {
+          return {
+            // Provide a function for reactivity
+            _reactContext: function _reactContext() {
+              return context;
+            }
+          };
+        },
         render: function render(createElement) {
           return createElement(VUE_COMPONENT_NAME, {
             props: this.$data,
@@ -332,23 +341,70 @@ var makeReactContainer = function makeReactContainer(Component) {
   }(React.Component), _class.displayName = 'ReactInVue' + (Component.displayName || Component.name || 'Component'), _temp;
 };
 
+function createContextProvider(context) {
+  var ContextProvider = function (_React$Component2) {
+    inherits(ContextProvider, _React$Component2);
+
+    function ContextProvider() {
+      classCallCheck(this, ContextProvider);
+      return possibleConstructorReturn(this, (ContextProvider.__proto__ || Object.getPrototypeOf(ContextProvider)).apply(this, arguments));
+    }
+
+    createClass(ContextProvider, [{
+      key: 'getChildContext',
+      value: function getChildContext() {
+        return context;
+      }
+    }, {
+      key: 'render',
+      value: function render() {
+        return this.props.children;
+      }
+    }]);
+    return ContextProvider;
+  }(React.Component);
+
+  ContextProvider.childContextTypes = {};
+  Object.keys(context).forEach(function (key) {
+    ContextProvider.childContextTypes[key] = React.PropTypes.any.isRequired;
+  });
+
+  return ContextProvider;
+}
+
 var ReactWrapper = {
   props: ['component', 'passedProps'],
   render: function render(createElement) {
     return createElement('div', { ref: 'react' });
   },
 
+  inject: {
+    $context: {
+      name: '_reactContext',
+      default: false
+    }
+  },
+  computed: {
+    context: function context() {
+      return this.$context ? this.$context() : null;
+    }
+  },
   methods: {
     mountReactComponent: function mountReactComponent(component) {
-      var _this2 = this;
+      var _this3 = this;
 
+      var ContextProvider = createContextProvider(this.context);
       var Component = makeReactContainer(component);
       var children = this.$slots.default !== undefined ? { children: this.$slots.default } : {};
-      ReactDOM.render(React.createElement(Component, _extends({}, this.$props.passedProps, this.$attrs, this.$listeners, children, {
-        ref: function ref(_ref) {
-          return _this2.reactComponentRef = _ref;
-        }
-      })), this.$refs.react);
+      ReactDOM.render(React.createElement(
+        ContextProvider,
+        null,
+        React.createElement(Component, _extends({}, this.$props.passedProps, this.$attrs, this.$listeners, children, {
+          ref: function ref(_ref) {
+            return _this3.reactComponentRef = _ref;
+          }
+        }))
+      ), this.$refs.react);
     }
   },
   mounted: function mounted() {
