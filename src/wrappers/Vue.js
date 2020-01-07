@@ -1,17 +1,13 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 import Vue from 'vue'
 import ReactWrapper from './React'
+import Context from '../Context'
 
 const VUE_COMPONENT_NAME = 'vuera-internal-component-name'
 
-const wrapReactChildren = (createElement, children) =>
-  createElement('vuera-internal-react-wrapper', {
-    props: {
-      component: () => <div>{children}</div>,
-    },
-  })
-
 export default class VueContainer extends React.Component {
+  static contextType = Context
   constructor (props) {
     super(props)
 
@@ -20,6 +16,7 @@ export default class VueContainer extends React.Component {
      * `component` prop.
      */
     this.currentVueComponent = props.component
+    this.slot = document.createElement('div')
 
     /**
      * Modify createVueInstance function to pass this binding correctly. Doing this in the
@@ -32,7 +29,13 @@ export default class VueContainer extends React.Component {
     }
   }
 
-  componentWillReceiveProps (nextProps) {
+  componentWillUnmount () {
+    this.vueInstance.$destroy()
+  }
+
+  /* eslint-disable camelcase */
+  UNSAFE_componentWillReceiveProps (nextProps) {
+    /* eslint-enable */
     const { component, ...props } = nextProps
 
     if (this.currentVueComponent !== component) {
@@ -46,33 +49,28 @@ export default class VueContainer extends React.Component {
     Object.assign(this.vueInstance.$data, props)
   }
 
-  componentWillUnmount () {
-    this.vueInstance.$destroy()
-  }
-
   /**
    * Creates and mounts the Vue instance.
    * NOTE: since we need to access the current instance of VueContainer, as well as the Vue instance
    * inside of the Vue constructor, we cannot bind this function to VueContainer, and we need to
    * pass VueContainer's binding explicitly.
-   * @param {HTMLElement} targetElement - element to attact the Vue instance to
-   * @param {ReactInstance} reactThisBinding - current instance of VueContainer
+   * @param {HTMLElement} targetElement - element to attach the Vue instance to
+   * @param {React.Component} reactThisBinding - current instance of VueContainer
    */
   createVueInstance (targetElement, reactThisBinding) {
+    if (targetElement === null) {
+      return
+    }
+
     const { component, on, ...props } = reactThisBinding.props
-    const context = reactThisBinding.__reactInternalMemoizedUnmaskedChildContext
 
     // `this` refers to Vue instance in the constructor
     reactThisBinding.vueInstance = new Vue({
       el: targetElement,
       data: props,
-      parent: typeof context === 'object' && 'vuerea' in context ? context.vuerea.instance : null,
       provide () {
         return {
-          // Provide a function for reactivity
-          _reactContext: () => {
-            return context
-          },
+          _vueraContext: reactThisBinding.context,
         }
       },
       render (createElement) {
@@ -82,9 +80,7 @@ export default class VueContainer extends React.Component {
             props: this.$data,
             on,
           },
-          this.children === undefined
-            ? undefined
-            : [wrapReactChildren(createElement, this.children)]
+          reactThisBinding.slot
         )
       },
       components: {
@@ -105,6 +101,9 @@ export default class VueContainer extends React.Component {
   }
 
   render () {
+    if (this.props.children) {
+      ReactDOM.createPortal(this.props.children, this.slot)
+    }
     return <div ref={this.createVueInstance} />
   }
 }

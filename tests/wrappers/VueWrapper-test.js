@@ -161,17 +161,17 @@ describe('VueInReact', () => {
 
     it('works with a string', () => {
       render('Hello')
-      expect(document.querySelector('#root div div').innerHTML).toBe('<div>Hello</div>')
+      expect(document.querySelector('#root').innerHTML).toBe('<div>Hello</div>')
     })
 
     it('works with an html component', () => {
       render(<div>Hello</div>)
-      expect(document.querySelector('#root div div').innerHTML).toBe('<div><div>Hello</div></div>')
+      expect(document.querySelector('#root').innerHTML).toBe('<div><div>Hello</div></div>')
     })
 
     it('works with a React component', () => {
       render(<VueWrapper component={componentWithChildren}>wow so nested</VueWrapper>)
-      expect(document.querySelector('#root div div').innerHTML).toBe(
+      expect(document.querySelector('#root').innerHTML).toBe(
         '<div><div><div><div>wow so nested</div></div></div></div>'
       )
     })
@@ -182,7 +182,7 @@ describe('VueInReact', () => {
         <div>Hello</div>,
         <VueWrapper component={componentWithChildren}>wow so nested</VueWrapper>
       )
-      expect(document.querySelector('#root div div').innerHTML).toBe(
+      expect(document.querySelector('#root').innerHTML).toBe(
         normalizeHTMLString(
           `<div>
             Hi there
@@ -195,6 +195,18 @@ describe('VueInReact', () => {
       )
     })
 
+    // React's doc on contexts is erroneous so make sure it works correctly
+    it('passes context', () => {
+      render(
+        <TestContext.Provider value='Mixing wrapper context'>
+          <ContextReader />
+        </TestContext.Provider>
+      )
+      expect(document.querySelector('#root').innerHTML).toBe(
+        '<div><span>Mixing wrapper context</span></div>'
+      )
+    })
+
     it('passes context when mixing react and vue', () => {
       render(
         <TestContext.Provider value='Mixing wrapper context'>
@@ -203,7 +215,7 @@ describe('VueInReact', () => {
           </VueWrapper>
         </TestContext.Provider>
       )
-      expect(document.querySelector('#root div div').innerHTML).toBe(
+      expect(document.querySelector('#root').innerHTML).toBe(
         '<div><div><div><div><span>Mixing wrapper context</span></div></div></div></div>'
       )
     })

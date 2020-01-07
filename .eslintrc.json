@@ -12,5 +12,9 @@
   "plugins": ["vue"],
   "globals": {
     "Symbol": true
+  },
+  "env": {
+    "browser": true,
+    "node": true
   }
 }

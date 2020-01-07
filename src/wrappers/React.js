@@ -32,80 +32,53 @@ const makeReactContainer = Component => {
         '': _invoker,
         ...rest
       } = this.state
-      const wrappedChildren = this.wrapVueChildren(children)
 
-      return (
-        <Component {...rest}>{children && <VueWrapper component={wrappedChildren} />}</Component>
-      )
+      if (children !== undefined) {
+        const wrappedChildren = this.wrapVueChildren(children)
+
+        return (
+          <Component {...rest}>
+            <VueWrapper component={wrappedChildren} />
+          </Component>
+        )
+      }
+
+      return <Component {...rest} />
     }
   }
-}
-
-function createContextProvider (context) {
-  class ContextProvider extends React.Component {
-    getChildContext () {
-      return context
-    }
-
-    render () {
-      return this.props.children
-    }
-  }
-
-  ContextProvider.childContextTypes = {}
-  Object.keys(context).forEach(key => {
-    ContextProvider.childContextTypes[key] = React.PropTypes.any.isRequired
-  })
-
-  return ContextProvider
 }
 
 export default {
-  props: ['component', 'passedProps'],
+  props: {
+    component: {
+      type: Function,
+    },
+    passedProps: {
+      type: Object,
+    },
+  },
   render (createElement) {
     return createElement('div', { ref: 'react' })
   },
   inject: {
-    $context: {
-      from: '_reactContext',
+    _vueraContext: {
       default: false,
-    },
-  },
-  computed: {
-    context () {
-      return this.$context ? this.$context() : undefined
     },
   },
   methods: {
     mountReactComponent (component) {
       const Component = makeReactContainer(component)
       const children = this.$slots.default !== undefined ? { children: this.$slots.default } : {}
-      if (this.context) {
-        const ContextProvider = createContextProvider(this.context)
-        ReactDOM.render(
-          <ContextProvider>
-            <Component
-              {...this.$props.passedProps}
-              {...this.$attrs}
-              {...this.$listeners}
-              {...children}
-              ref={ref => (this.reactComponentRef = ref)}
-            />
-          </ContextProvider>,
-          this.$refs.react
-        )
-      } else {
-        ReactDOM.render(
-          <Component
-            {...this.$props.passedProps}
-            {...this.$attrs}
-            {...this.$listeners}
-            {...children}
-            ref={ref => (this.reactComponentRef = ref)}
-          />,
-          this.$refs.react
-        )
-      }
+      ReactDOM.render(
+        <Component
+          {...this.$props.passedProps}
+          {...this.$attrs}
+          {...this.$listeners}
+          {...children}
+          ref={ref => (this.reactComponentRef = ref)}
+        />,
+        this.$refs.react
+      )
     },
   },
   mounted () {
